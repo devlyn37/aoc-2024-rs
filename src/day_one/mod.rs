@@ -10,34 +10,30 @@ pub fn part_two() -> u32 {
     find_similarity_score(list1, list2)
 }
 
-fn find_difference_score(mut list1: Vec<u32>, mut list2: Vec<u32>) -> u32 {
-    list1.sort();
-    list2.sort();
+fn find_difference_score(mut list_one: Vec<u32>, mut list_two: Vec<u32>) -> u32 {
+    list_one.sort();
+    list_two.sort();
 
-    let mut difference = 0;
-    for i in 0..list1.len() {
-        difference += list1[i].abs_diff(list2[i])
-    }
-
-    difference
+    list_one
+        .iter()
+        .zip(list_two.iter())
+        .map(|(a, b)| a.abs_diff(*b))
+        .sum()
 }
 
-fn find_similarity_score(list1: Vec<u32>, list2: Vec<u32>) -> u32 {
-    let mut second_list_number_frequency: HashMap<u32, u32> = HashMap::new();
-    for location_id in list2 {
-        second_list_number_frequency
+fn find_similarity_score(list_one: Vec<u32>, list_two: Vec<u32>) -> u32 {
+    let mut list_two_occurances: HashMap<u32, u32> = HashMap::new();
+    for location_id in list_two {
+        list_two_occurances
             .entry(location_id)
             .and_modify(|entry| *entry += 1)
             .or_insert(1);
     }
 
-    let mut score = 0;
-    for location_id in list1 {
-        let frequency_in_second_list = second_list_number_frequency.get(&location_id).unwrap_or(&0);
-        score += location_id * frequency_in_second_list;
-    }
-
-    score
+    list_one
+        .into_iter()
+        .map(|id| id * list_two_occurances.get(&id).unwrap_or(&0))
+        .sum()
 }
 
 // Assumptions
@@ -45,18 +41,16 @@ fn find_similarity_score(list1: Vec<u32>, list2: Vec<u32>) -> u32 {
 // no location ids are greater than max u32 size
 // No errors / typos in the list
 fn parse_input() -> (Vec<u32>, Vec<u32>) {
-    let input = include_str!("./input.txt");
-    let lines = input.lines();
     let mut list1: Vec<u32> = vec![];
     let mut list2: Vec<u32> = vec![];
 
-    for line in lines {
+    for line in include_str!("./input.txt").lines() {
         let split = line.split_whitespace();
         for (index, value) in split.enumerate() {
             match index {
-                0 => list1.push(value.parse().expect("invalid")),
-                1 => list2.push(value.parse().expect("invalid")),
-                _ => panic!("Invalid number of rows in input"),
+                0 => list1.push(value.parse().expect("invalid location id")),
+                1 => list2.push(value.parse().expect("invalid location id")),
+                _ => panic!("Invalid number of rows within input file"),
             };
         }
     }
@@ -67,7 +61,7 @@ fn parse_input() -> (Vec<u32>, Vec<u32>) {
     );
 
     assert!(
-        list1.len() > 0,
+        !list1.is_empty(),
         "Input lists must have at least one element"
     );
 
